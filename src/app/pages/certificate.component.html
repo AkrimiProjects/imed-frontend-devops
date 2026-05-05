@@ -1,0 +1,437 @@
+<div class="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto">
+    <!-- Progress Stepper -->
+    <div class="mb-12">
+      <div class="flex items-center justify-between max-w-2xl mx-auto relative">
+        <div class="absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 -translate-y-1/2"></div>
+        <div class="absolute top-1/2 left-0 h-0.5 bg-teal-500 -translate-y-1/2 transition-all duration-500" 
+             [style.width.%]="(currentStep - 1) * 33.33"></div>
+        
+        <div *ngFor="let s of [1,2,3,4]" 
+             class="relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-500"
+             [class]="currentStep >= s ? 'bg-teal-600 text-white' : 'bg-white border-2 border-slate-200 text-slate-400'">
+          {{ s }}
+        </div>
+      </div>
+      <div class="flex justify-between max-w-2xl mx-auto mt-2 text-[10px] uppercase font-black tracking-widest text-slate-400">
+        <span>S'inscrire</span>
+        <span>Choisir</span>
+        <span>Quiz</span>
+        <span>Résultat</span>
+      </div>
+    </div>
+
+    <!-- Step 0: Search My Certificates Toggle -->
+    <div class="flex justify-end mb-4">
+      <button (click)="showMyCertificates = !showMyCertificates" 
+              class="text-xs font-bold text-teal-600 hover:text-teal-700 underline flex items-center gap-1">
+        <lucide-icon [name]="GraduationIcon" class="h-3 w-3"></lucide-icon>
+        {{ showMyCertificates ? 'Retour' : 'Voir mes certificats' }}
+      </button>
+    </div>
+
+    <!-- My Certificates View -->
+    <div *ngIf="showMyCertificates" class="animate-in bg-white rounded-3xl p-8 shadow-xl mb-8">
+      <h2 class="text-2xl font-black text-slate-900 mb-6">Mes Certificats</h2>
+      <div class="flex gap-2 mb-8">
+        <input [(ngModel)]="userInfo.email" placeholder="Entrez votre email" class="flex-1 rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-teal-500">
+        <button (click)="loadMyCertificates()" class="bg-teal-600 text-white px-6 py-3 rounded-2xl font-bold">Vérifier</button>
+      </div>
+
+      <div *ngIf="myCertificates.length === 0" class="text-center py-12 text-slate-400">
+        Aucun certificat trouvé pour cet email.
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div *ngFor="let m of myCertificates" class="p-6 rounded-2xl border border-teal-50 bg-teal-50/30 flex justify-between items-center">
+          <div>
+            <h4 class="font-bold text-slate-800">{{ m.certificate.title }}</h4>
+            <span class="text-[10px] text-slate-400">Délivré le {{ m.issueDate | date:'mediumDate' }}</span>
+          </div>
+          <button (click)="selectedCertificate = m.certificate; quizResult = {passed: true, score: 100, certificateNumber: m.certificateNumber, message: ''}; downloadCertificatePDF()" 
+                  class="p-2 rounded-xl bg-teal-600 text-white hover:bg-teal-700 transition-colors">
+            <lucide-icon [name]="DownloadIcon" class="h-4 w-4"></lucide-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 1: User Info -->
+    <div *ngIf="currentStep === 1 && !showMyCertificates" class="bg-white rounded-3xl shadow-xl p-8 animate-in active">
+      <div class="text-center mb-8">
+        <div class="inline-flex p-4 rounded-2xl bg-teal-50 text-teal-600 mb-4">
+          <lucide-icon [name]="UserIcon" class="h-8 w-8"></lucide-icon>
+        </div>
+        <h2 class="text-3xl font-black text-slate-900">Bienvenue au Portail de Certification</h2>
+        <p class="text-slate-500">Commencez par remplir vos informations personnelles.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+        <div class="space-y-1">
+          <label class="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Prénom</label>
+          <input [(ngModel)]="userInfo.firstName" name="firstName" #fName="ngModel" type="text" 
+                 class="w-full rounded-2xl border border-slate-200 px-5 py-4 outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-50" 
+                 placeholder="Jean" required>
+          <div *ngIf="fName.invalid && (fName.dirty || fName.touched)" class="text-[10px] text-red-500 font-bold px-2">Le prénom est requis.</div>
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Nom</label>
+          <input [(ngModel)]="userInfo.lastName" name="lastName" #lName="ngModel" type="text" 
+                 class="w-full rounded-2xl border border-slate-200 px-5 py-4 outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-50" 
+                 placeholder="Dupont" required>
+          <div *ngIf="lName.invalid && (lName.dirty || lName.touched)" class="text-[10px] text-red-500 font-bold px-2">Le nom est requis.</div>
+        </div>
+        <div class="col-span-1 md:col-span-2 space-y-1">
+          <label class="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Email</label>
+          <input [(ngModel)]="userInfo.email" name="email" #cEmail="ngModel" type="email" 
+                 class="w-full rounded-2xl border border-slate-200 px-5 py-4 outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-50" 
+                 placeholder="jean.dupont@example.com" required email>
+          <div *ngIf="cEmail.invalid && (cEmail.dirty || cEmail.touched)" class="text-[10px] text-red-500 font-bold px-2">
+            <span *ngIf="cEmail.errors?.['required']">L'email est requis.</span>
+            <span *ngIf="cEmail.errors?.['email']">Format d'email invalide.</span>
+          </div>
+        </div>
+        <button (click)="nextStep()" 
+                [disabled]="!userInfo.firstName || !userInfo.lastName || cEmail.invalid"
+                class="col-span-1 md:col-span-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-black py-4 rounded-2xl mt-4 transition-all shadow-lg shadow-teal-100 flex items-center justify-center gap-2">
+          Continuer
+          <lucide-icon [name]="NextIcon" class="h-5 w-5"></lucide-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Selection -->
+    <div *ngIf="currentStep === 2" class="animate-in">
+      <div class="text-center mb-10">
+        <h2 class="text-3xl font-black text-slate-900">Certifications Disponibles</h2>
+        <p class="text-slate-500 mt-2">Choisissez l'examen que vous souhaitez passer.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div *ngFor="let cert of availableCertificates" 
+             class="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group"
+             (click)="startQuiz(cert)">
+          <div class="flex justify-between items-start mb-6">
+            <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <lucide-icon [name]="AwardIcon" class="h-8 w-8"></lucide-icon>
+            </div>
+            <span class="bg-indigo-100 text-indigo-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+              Passage: {{ cert.passingScore }}%
+            </span>
+          </div>
+          <h3 class="text-2xl font-black text-slate-900 mb-2">{{ cert.title }}</h3>
+          <p class="text-slate-500 text-sm mb-6">{{ cert.description }}</p>
+          <div class="flex items-center gap-2 text-indigo-600 font-bold group-hover:gap-4 transition-all">
+            Commencer le Test
+            <lucide-icon [name]="NextIcon" class="h-5 w-5"></lucide-icon>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student Pagination -->
+      <div *ngIf="totalPages > 1" class="mt-8 flex items-center justify-center gap-4 animate-in">
+        <button (click)="goToPage(currentPage - 1)" 
+                [disabled]="currentPage === 0 || isLoading"
+                class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 disabled:opacity-30 transition-all">
+          <lucide-icon [name]="PrevIcon" class="h-4 w-4"></lucide-icon>
+          Précédent
+        </button>
+        
+        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">
+          Page {{ currentPage + 1 }} sur {{ totalPages }}
+        </span>
+
+        <button (click)="goToPage(currentPage + 1)" 
+                [disabled]="currentPage === totalPages - 1 || isLoading"
+                class="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 disabled:opacity-30 transition-all">
+          Suivant
+          <lucide-icon [name]="NextIcon" class="h-4 w-4"></lucide-icon>
+        </button>
+      </div>
+
+      <div *ngIf="availableCertificates.length === 0 && !isLoading" class="text-center py-12 text-slate-400">
+        Aucun certificat disponible pour le moment.
+      </div>
+    </div>
+
+    <!-- Step 3: Quiz -->
+    <div *ngIf="currentStep === 3 && selectedCertificate" class="bg-white rounded-3xl shadow-xl p-10 animate-in">
+      <div class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+        <div>
+          <span class="text-[10px] font-black text-teal-600 uppercase tracking-[0.2em] mb-1 block">Examen en cours</span>
+          <h2 class="text-3xl font-black text-slate-900">{{ selectedCertificate.title }}</h2>
+        </div>
+        
+        <!-- Timer & Navigation Info -->
+        <div class="flex items-center gap-4">
+          <div class="bg-slate-50 px-6 py-4 rounded-2xl border border-slate-100 flex items-center" 
+               [class.border-red-200]="timeLeft < 60 && !timeExpired" 
+               [class.bg-red-50]="timeLeft < 60 && !timeExpired">
+            <lucide-icon [name]="AlertIcon" class="h-5 w-5 mr-3" [class.text-red-500]="timeLeft < 60"></lucide-icon>
+            <div class="text-right">
+              <span class="text-[10px] font-black uppercase text-slate-400 block mb-0.5">Temps restant</span>
+              <span class="text-2xl font-black tabular-nums" [class.text-red-500]="timeLeft < 60">{{ formattedTime }}</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-50 px-6 py-4 rounded-2xl border border-slate-100 flex items-center">
+            <lucide-icon [name]="CheckIcon" class="h-5 w-5 mr-3" [class.text-emerald-500]="answeredCount === (selectedCertificate.questions?.length ?? 0)" [class.text-slate-300]="answeredCount < (selectedCertificate.questions?.length ?? 0)"></lucide-icon>
+            <div>
+              <span class="text-xs font-bold text-slate-400 uppercase mr-2">Question</span>
+              <span class="text-2xl font-black text-slate-800">{{ currentQuestionIndex + 1 }}</span>
+              <span class="text-slate-300 mx-2">/</span>
+              <span class="text-lg font-bold text-slate-400">{{ selectedCertificate.questions?.length ?? 0 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Expired Message -->
+      <div *ngIf="timeExpired" class="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-center font-bold animate-pulse">
+        TEMPS ÉCOULÉ ! Soumission automatique en cours...
+      </div>
+
+      <!-- Review Mode Summary -->
+      <div *ngIf="reviewMode" class="mb-10 animate-in fade-in zoom-in-95">
+        <div class="bg-indigo-50 border border-indigo-100 p-8 rounded-[2rem] text-center">
+          <h3 class="text-2xl font-black text-slate-900 mb-2">Vérification de vos réponses</h3>
+          <p class="text-slate-500 mb-8">Vous y êtes presque ! Prenez un moment pour vérifier votre progression.</p>
+          
+          <div class="grid grid-cols-2 gap-4 max-w-md mx-auto mb-8">
+            <div class="bg-white p-4 rounded-2xl shadow-sm">
+              <span class="text-[10px] font-black uppercase text-slate-400 block">Répondues</span>
+              <span class="text-2xl font-black text-emerald-500">{{ answeredCount }}</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm">
+              <span class="text-[10px] font-black uppercase text-slate-400 block">Restantes</span>
+              <span class="text-2xl font-black" [class]="unansweredCount > 0 ? 'text-red-500' : 'text-slate-300'">{{ unansweredCount }}</span>
+            </div>
+          </div>
+
+          <div *ngIf="unansweredCount > 0" class="mb-8 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold flex items-center justify-center gap-2">
+            <lucide-icon [name]="AlertIcon" class="h-4 w-4"></lucide-icon>
+            Questions non répondues : {{ unansweredQuestions.join(', ') }}
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <button (click)="reviewMode = false" class="px-8 py-4 rounded-2xl bg-white border border-slate-200 text-slate-700 font-black hover:bg-slate-50 transition-all">
+              Retour au Quiz
+            </button>
+            <button (click)="submitQuiz()" class="px-10 py-4 rounded-2xl bg-teal-600 text-white font-black hover:bg-teal-700 transition-all shadow-xl shadow-teal-100 flex items-center justify-center gap-2">
+              Confirmer et Terminer
+              <lucide-icon [name]="CheckIcon" class="h-5 w-5"></lucide-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Jump to unanswered -->
+        <div class="mt-8 grid grid-cols-5 md:grid-cols-10 gap-2">
+          <button *ngFor="let q of selectedCertificate.questions; let idx = index"
+                  (click)="jumpToQuestion(idx + 1)"
+                  [class]="userAnswers[q.id!] ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100 hover:scale-110'"
+                  class="h-10 w-10 rounded-xl border font-black text-xs transition-all flex items-center justify-center">
+            {{ idx + 1 }}
+          </button>
+        </div>
+      </div>
+
+      <div class="mb-12" *ngIf="selectedCertificate.questions && selectedCertificate.questions[currentQuestionIndex] as q">
+        <h3 class="text-2xl font-bold text-slate-800 mb-8 leading-tight">{{ q.text }}</h3>
+        
+        <div class="grid grid-cols-1 gap-4">
+          <button (click)="selectAnswer(q.id!, 'A')"
+                  [class]="userAnswers[q.id!] === 'A' ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-slate-100 hover:border-teal-200'"
+                  class="flex items-center p-6 rounded-3xl border-2 text-left transition-all">
+            <span class="w-8 h-8 rounded-full border-2 border-current flex items-center justify-center font-black mr-4 shrink-0">A</span>
+            <span class="font-bold">{{ q.choiceA }}</span>
+          </button>
+          
+          <button (click)="selectAnswer(q.id!, 'B')"
+                  [class]="userAnswers[q.id!] === 'B' ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-slate-100 hover:border-teal-200'"
+                  class="flex items-center p-6 rounded-3xl border-2 text-left transition-all">
+            <span class="w-8 h-8 rounded-full border-2 border-current flex items-center justify-center font-black mr-4 shrink-0">B</span>
+            <span class="font-bold">{{ q.choiceB }}</span>
+          </button>
+          
+          <button (click)="selectAnswer(q.id!, 'C')"
+                  [class]="userAnswers[q.id!] === 'C' ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-slate-100 hover:border-teal-200'"
+                  class="flex items-center p-6 rounded-3xl border-2 text-left transition-all">
+            <span class="w-8 h-8 rounded-full border-2 border-current flex items-center justify-center font-black mr-4 shrink-0">C</span>
+            <span class="font-bold">{{ q.choiceC }}</span>
+          </button>
+          
+          <button (click)="selectAnswer(q.id!, 'D')"
+                  [class]="userAnswers[q.id!] === 'D' ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-slate-100 hover:border-teal-200'"
+                  class="flex items-center p-6 rounded-3xl border-2 text-left transition-all">
+            <span class="w-8 h-8 rounded-full border-2 border-current flex items-center justify-center font-black mr-4 shrink-0">D</span>
+            <span class="font-bold">{{ q.choiceD }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center pt-6 border-t border-slate-100" *ngIf="!reviewMode">
+        <button (click)="prevQuestion()" 
+                [disabled]="currentQuestionIndex === 0"
+                class="px-8 py-4 rounded-2xl border border-slate-200 text-slate-400 font-bold hover:bg-slate-50 disabled:opacity-30 transition-all flex items-center gap-2">
+          <lucide-icon [name]="PrevIcon" class="h-5 w-5"></lucide-icon>
+          Précédent
+        </button>
+
+        <button (click)="nextQuestion()" 
+                class="bg-teal-600 hover:bg-teal-700 text-white font-black px-10 py-5 rounded-2xl transition-all shadow-lg shadow-teal-100 flex items-center gap-2">
+          {{ currentQuestionIndex === (selectedCertificate.questions?.length ?? 0) - 1 ? 'Vérifier' : 'Suivant' }}
+          <lucide-icon [name]="NextIcon" class="h-5 w-5"></lucide-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 4: Result -->
+    <div *ngIf="currentStep === 4 && quizResult" class="animate-in">
+      <div class="bg-white rounded-[3rem] shadow-2xl p-12 text-center border-b-[12px]" 
+           [class]="quizResult.passed ? 'border-emerald-500' : 'border-red-400'">
+        
+        <div *ngIf="quizResult.passed" class="inline-flex p-6 rounded-[2rem] bg-emerald-50 text-emerald-600 mb-8">
+          <lucide-icon [name]="GraduationIcon" class="h-16 w-16"></lucide-icon>
+        </div>
+        <div *ngIf="!quizResult.passed" class="inline-flex p-6 rounded-[2rem] bg-red-50 text-red-500 mb-8">
+          <lucide-icon [name]="AlertIcon" class="h-16 w-16"></lucide-icon>
+        </div>
+
+        <h2 class="text-5xl font-black text-slate-900 mb-4">
+          {{ quizResult.passed ? 'Félicitations !' : (timeExpired ? 'Temps Épuisé' : 'Oups...') }}
+        </h2>
+        <h3 class="text-xl text-slate-500 mb-10 max-w-lg mx-auto">{{ quizResult.message }}</h3>
+
+        <div class="bg-slate-50 inline-flex items-center gap-12 px-12 py-8 rounded-[2.5rem] mb-12 border border-slate-100">
+          <div class="text-center">
+            <span class="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-2">Votre Score</span>
+            <span class="text-5xl font-black text-slate-900">{{ quizResult.score }}%</span>
+          </div>
+          <div class="w-px h-12 bg-slate-200"></div>
+          <div class="text-center">
+            <span class="text-[10px] uppercase font-black text-slate-400 tracking-widest block mb-2">Résultat</span>
+            <span class="text-2xl font-black" [class]="quizResult.passed ? 'text-emerald-500' : 'text-red-500'">
+              {{ quizResult.passed ? 'RÉUSSI' : 'ÉCHOUÉ' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <button *ngIf="quizResult.passed" (click)="downloadCertificatePDF()" 
+                  class="bg-teal-600 hover:bg-teal-700 text-white font-black px-10 py-5 rounded-[2rem] transition-all flex items-center justify-center gap-3 shadow-xl shadow-teal-100">
+            <lucide-icon [name]="DownloadIcon" class="h-6 w-6"></lucide-icon>
+            Télécharger mon Certificat
+          </button>
+          <button (click)="restart()" 
+                  class="bg-slate-900 hover:bg-slate-800 text-white font-black px-10 py-5 rounded-[2rem] transition-all flex items-center justify-center gap-3">
+            {{ quizResult.passed ? 'Continuer' : 'Réessayer' }}
+          </button>
+        </div>
+
+        <!-- Rating Section -->
+        <div *ngIf="quizResult.passed && !ratingSubmitted" class="mt-12 pt-12 border-t border-slate-100 animate-in">
+          <h4 class="text-xl font-black text-slate-800 mb-2">Votre avis nous intéresse !</h4>
+          <p class="text-slate-500 mb-6 text-sm">Comment évaluez-vous ce programme de certification ?</p>
+          
+          <div class="flex justify-center gap-2 mb-6">
+            <button *ngFor="let s of [1,2,3,4,5]" (click)="rate(s)" 
+                    class="transition-all hover:scale-125">
+              <lucide-icon [name]="StarIcon" 
+                           [class]="userRating >= s ? 'fill-yellow-400 text-yellow-400' : 'text-slate-200'"
+                           class="h-10 w-10"></lucide-icon>
+            </button>
+          </div>
+
+          <div class="max-w-md mx-auto space-y-4" *ngIf="userRating > 0">
+            <textarea [(ngModel)]="userFeedback" placeholder="Un petit commentaire ? (optionnel)" 
+                      class="w-full rounded-2xl border border-slate-200 p-4 text-sm outline-none focus:border-teal-500 min-h-[100px]"></textarea>
+            <button (click)="submitRating()" 
+                    [disabled]="isSubmittingRating"
+                    class="w-full bg-teal-50 text-teal-600 font-bold py-3 rounded-2xl hover:bg-teal-100 transition-all flex items-center justify-center gap-2">
+              <span *ngIf="!isSubmittingRating">Envoyer mon avis</span>
+              <span *ngIf="isSubmittingRating">Envoi en cours...</span>
+              <lucide-icon *ngIf="!isSubmittingRating" [name]="CheckIcon" class="h-4 w-4"></lucide-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Rating Success Message -->
+        <div *ngIf="quizResult.passed && ratingSubmitted" class="mt-12 pt-12 border-t border-slate-100 animate-in fade-in">
+          <div class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-50 text-emerald-600 rounded-2xl font-bold">
+            <lucide-icon [name]="CheckIcon" class="h-5 w-5"></lucide-icon>
+            Merci pour votre avis !
+          </div>
+        </div>
+
+        <!-- Topics to Review Section -->
+        <div *ngIf="!quizResult.passed && quizResult.topicsToReview && quizResult.topicsToReview.length > 0" class="mt-12 animate-in">
+          <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-[2.5rem] p-10 border border-amber-100 shadow-lg">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                <lucide-icon [name]="BookIcon" class="h-7 w-7"></lucide-icon>
+              </div>
+              <div>
+                <h3 class="text-2xl font-black text-slate-900">Parties à Réviser</h3>
+                <p class="text-slate-500 text-sm">Concentrez-vous sur ces topics pour améliorer votre score</p>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <span *ngFor="let topic of quizResult.topicsToReview"
+                    class="inline-flex items-center gap-2 px-5 py-3 bg-white rounded-xl border border-amber-200 text-slate-700 font-bold shadow-sm hover:shadow-md transition-shadow">
+                <lucide-icon [name]="BookIcon" class="h-4 w-4 text-amber-500"></lucide-icon>
+                {{ topic }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Correction Section -->
+      <div class="mt-12 space-y-8 animate-in">
+        <div class="text-left mb-6">
+          <h3 class="text-2xl font-black text-slate-800">Correction Détaillée</h3>
+          <p class="text-slate-500">Revoyez vos réponses et apprenez de vos erreurs.</p>
+        </div>
+
+        <div *ngFor="let corr of quizResult.corrections; let i = index" 
+             class="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100 transition-all hover:shadow-md">
+          <div class="flex justify-between items-start mb-6">
+            <div class="flex gap-4 items-start">
+              <span class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-black text-slate-500 shrink-0">
+                {{ i + 1 }}
+              </span>
+              <h4 class="text-lg font-bold text-slate-900 leading-snug">{{ corr.questionText }}</h4>
+            </div>
+            <span [class]="corr.correct ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'"
+                  class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+              {{ corr.correct ? 'Correct' : 'Incorrect' }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="p-4 rounded-2xl" [class]="corr.correct ? 'bg-emerald-50/50 border border-emerald-100' : 'bg-red-50/50 border border-red-100'">
+              <span class="text-[10px] font-black uppercase tracking-widest block mb-1" [class]="corr.correct ? 'text-emerald-500' : 'text-red-400'">
+                Votre Réponse
+              </span>
+              <p class="font-bold text-slate-800">Option {{ corr.selectedAnswer }}</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100" *ngIf="!corr.correct">
+              <span class="text-[10px] font-black uppercase tracking-widest block mb-1 text-indigo-400">
+                Bonne Réponse
+              </span>
+              <p class="font-bold text-slate-800">Option {{ corr.correctAnswer }}</p>
+            </div>
+          </div>
+
+          <div *ngIf="corr.explanation" class="bg-slate-50 rounded-2xl p-6 border-l-4 border-teal-500">
+            <div class="flex gap-3 items-center mb-2">
+              <lucide-icon [name]="BookIcon" class="h-4 w-4 text-teal-600"></lucide-icon>
+              <span class="text-xs font-black text-teal-600 uppercase tracking-widest">Explication Pédagogique</span>
+            </div>
+            <p class="text-slate-600 text-sm italic">{{ corr.explanation }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
