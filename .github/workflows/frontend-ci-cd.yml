@@ -80,3 +80,19 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t imed-frontend:latest .
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Tag and push Docker image (latest)
+        run: |
+          docker tag imed-frontend:latest imedakrimi/imed-frontend:latest
+          docker push imedakrimi/imed-frontend:latest
+
+      - name: Tag and push Docker image (commit SHA)
+        run: |
+          docker tag imed-frontend:latest imedakrimi/imed-frontend:${{ github.sha }}
+          docker push imedakrimi/imed-frontend:${{ github.sha }}
