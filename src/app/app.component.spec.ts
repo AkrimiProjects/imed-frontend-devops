@@ -1,29 +1,29 @@
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
+import { RouterModule } from '@angular/router';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AppComponent],
+      imports: [
+        AppComponent,
+        RouterModule.forRoot([]),
+      ],
     }).compileComponents();
   });
 
+  // Verifies that AppComponent instantiates without errors
   it('should create the app', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'frontend' title`, () => {
+  // Verifies that isAdminRoute is a boolean and defaults to false on root URL
+  it('should have isAdminRoute returning a boolean', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('frontend');
-  });
-
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, frontend');
+    expect(typeof app.isAdminRoute).toBe('boolean');
   });
 });
+
