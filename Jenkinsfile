@@ -46,12 +46,14 @@ pipeline {
         }
 
         // ── Stage 3: Test ─────────────────────────────────────────────────────
-        // Run Angular unit tests in headless Chrome mode (no display required)
-        // --watch=false ensures the test runner exits after one run (CI mode)
+        // Run Angular unit tests in CI mode.
+        // --watch=false ensures the test runner exits after one run.
+        // Note: --browsers=ChromeHeadless removed because @vitest/browser-playwright
+        // is not installed. The default Vitest runner is used instead.
         stage('Test') {
             steps {
-                echo '✅ Running Angular unit tests in headless Chrome...'
-                sh 'npm test -- --watch=false --browsers=ChromeHeadless'
+                echo '✅ Running Angular unit tests...'
+                sh 'npm test -- --watch=false'
             }
         }
 
