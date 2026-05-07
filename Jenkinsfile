@@ -29,11 +29,19 @@ pipeline {
 
         // ── Stage 2: Install Dependencies ─────────────────────────────────────
         // Install Node.js packages using npm ci (clean install from lock file)
-        // npm ci is preferred over npm install for reproducible CI builds
+        // npm ci is preferred over npm install for reproducible CI builds.
+        // Network reliability settings are applied first to prevent
+        // ERR_SOCKET_TIMEOUT errors that can occur in Jenkins environments.
         stage('Install Dependencies') {
             steps {
-                echo '📦 Installing Node.js dependencies with npm ci...'
-                sh 'npm ci'
+                echo '📦 Configuring npm for reliable downloads in Jenkins...'
+                sh 'npm config set registry https://registry.npmjs.org/'
+                sh 'npm config set fetch-retries 5'
+                sh 'npm config set fetch-retry-mintimeout 20000'
+                sh 'npm config set fetch-retry-maxtimeout 120000'
+                sh 'npm config set fetch-timeout 300000'
+                echo '📦 Installing Node.js dependencies...'
+                sh 'npm ci --prefer-offline --no-audit --progress=false'
             }
         }
 
